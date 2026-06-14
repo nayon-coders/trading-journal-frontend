@@ -39,7 +39,8 @@ const MenuBar = ({ editor }: { editor: any }) => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      const imageUrl = `http://localhost:5000${response.data.url}`;
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const imageUrl = `${backendUrl}${response.data.url}`;
       editor.chain().focus().setImage({ src: imageUrl }).run();
     } catch (error) {
       console.error('Image upload failed', error);

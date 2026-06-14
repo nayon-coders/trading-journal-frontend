@@ -70,7 +70,8 @@ export default function AddTrade() {
       const response = await api.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      setImageUrlBefore(`http://localhost:5000${response.data.url}`);
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      setImageUrlBefore(`${backendUrl}${response.data.url}`);
     } catch (error) {
       toast({ variant: "destructive", title: "Upload Failed" });
     } finally {
