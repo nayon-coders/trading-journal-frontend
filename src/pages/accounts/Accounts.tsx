@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash2 } from 'lucide-react';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface Account {
   id: string;
@@ -17,6 +18,7 @@ interface Account {
   startingBalance: number;
   currentBalance: number;
   accountType: string;
+  currency: string;
 }
 
 export default function Accounts() {
@@ -31,6 +33,7 @@ export default function Accounts() {
   const [brokerName, setBrokerName] = useState('');
   const [startingBalance, setStartingBalance] = useState('');
   const [accountType, setAccountType] = useState('Personal');
+  const [currency, setCurrency] = useState('USD');
 
   const { toast } = useToast();
 
@@ -59,7 +62,8 @@ export default function Accounts() {
         accountName,
         brokerName,
         startingBalance: parseFloat(startingBalance),
-        accountType
+        accountType,
+        currency
       });
       toast({
         title: "Success",
@@ -88,7 +92,8 @@ export default function Accounts() {
         accountName,
         brokerName,
         startingBalance: parseFloat(startingBalance),
-        accountType
+        accountType,
+        currency
       });
       toast({
         title: "Success",
@@ -129,6 +134,7 @@ export default function Accounts() {
     setBrokerName(account.brokerName || '');
     setStartingBalance(String(account.startingBalance));
     setAccountType(account.accountType || 'Personal');
+    setCurrency(account.currency || 'USD');
     setIsEditOpen(true);
   };
 
@@ -137,6 +143,7 @@ export default function Accounts() {
     setBrokerName('');
     setStartingBalance('');
     setAccountType('Personal');
+    setCurrency('USD');
     setEditingAccountId(null);
   };
 
@@ -181,7 +188,7 @@ export default function Accounts() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="startingBalance">Starting Balance ($)</Label>
+                  <Label htmlFor="startingBalance">Starting Balance</Label>
                   <Input 
                     id="startingBalance" 
                     type="number" 
@@ -201,6 +208,19 @@ export default function Accounts() {
                       <SelectItem value="Personal">Personal</SelectItem>
                       <SelectItem value="Funded">Funded</SelectItem>
                       <SelectItem value="Prop Firm">Prop Firm Challenge</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                      <SelectItem value="BDT">BDT (৳)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -245,7 +265,7 @@ export default function Accounts() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-startingBalance">Starting Balance ($)</Label>
+                  <Label htmlFor="edit-startingBalance">Starting Balance</Label>
                   <Input 
                     id="edit-startingBalance" 
                     type="number" 
@@ -265,6 +285,19 @@ export default function Accounts() {
                       <SelectItem value="Personal">Personal</SelectItem>
                       <SelectItem value="Funded">Funded</SelectItem>
                       <SelectItem value="Prop Firm">Prop Firm Challenge</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-currency">Currency</Label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                      <SelectItem value="BDT">BDT (৳)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -291,9 +324,9 @@ export default function Accounts() {
               </span>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${account.currentBalance.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{formatCurrency(account.currentBalance, account.currency)}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Current Balance (Started with ${account.startingBalance.toLocaleString()})
+                Current Balance (Started with {formatCurrency(account.startingBalance, account.currency)})
               </p>
               {account.brokerName && (
                 <p className="text-sm mt-4 text-muted-foreground">

@@ -4,6 +4,7 @@ import api from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { Edit, Trash2 } from 'lucide-react';
 import TradeFilterBar from '@/components/TradeFilterBar';
 import { useTradeFilter } from '@/hooks/useTradeFilter';
@@ -19,7 +20,7 @@ interface Trade {
   setup: string;
   setupRelation?: { name: string };
   session: string;
-  account: { accountName: string };
+  account: { accountName: string; currency: string };
 }
 
 export default function Trades() {
@@ -113,7 +114,7 @@ export default function Trades() {
                   </span>
                 </TableCell>
                 <TableCell className={`text-right font-bold ${trade.profitAmount && trade.profitAmount > 0 ? 'text-green-500' : trade.profitAmount && trade.profitAmount < 0 ? 'text-red-500' : ''}`}>
-                  {trade.profitAmount ? `$${trade.profitAmount.toFixed(2)}` : '-'}
+                  {trade.profitAmount ? formatCurrency(trade.profitAmount, trade.account?.currency || 'USD') : '-'}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">

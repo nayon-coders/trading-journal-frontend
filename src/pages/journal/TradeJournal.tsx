@@ -5,10 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { format, isThisWeek, isThisMonth, isThisYear } from 'date-fns';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, Image as ImageIcon } from 'lucide-react';
+import { BookOpen, Calendar as CalendarIcon, Tag, Clock, ArrowRight } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TradeFilterBar from '@/components/TradeFilterBar';
 import { useTradeFilter } from '@/hooks/useTradeFilter';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface Trade {
   id: string;
@@ -26,6 +27,9 @@ interface Trade {
   rrRatio: number;
   riskAmount: number;
   status: string;
+  account?: {
+    currency: string;
+  };
   profitAmount: number;
   preTradeNote: string;
   executionNote: string;
@@ -115,7 +119,7 @@ export default function TradeJournal() {
               <div className="text-sm font-bold mb-4 text-gray-900">
                 {trade.profitAmount !== null && trade.profitAmount !== undefined ? (
                   <span className={trade.profitAmount >= 0 ? '' : ''}>
-                    {trade.profitAmount < 0 ? '-' : ''}${Math.abs(trade.profitAmount).toFixed(2)}
+                    {trade.profitAmount < 0 ? '-' : ''}{formatCurrency(Math.abs(trade.profitAmount), trade.account?.currency || 'USD')}
                   </span>
                 ) : (
                   '-'

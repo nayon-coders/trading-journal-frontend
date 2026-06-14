@@ -17,6 +17,7 @@ import {
 } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface Trade {
   id: string;
@@ -24,6 +25,9 @@ interface Trade {
   pair: string;
   profitAmount: number | null;
   status: string;
+  account?: {
+    currency: string;
+  };
 }
 
 export default function Calendar() {
@@ -109,6 +113,7 @@ export default function Calendar() {
             {days.map((day, idx) => {
               const dayTrades = getDayTrades(day);
               const totalPnL = dayTrades.reduce((sum, t) => sum + (t.profitAmount || 0), 0);
+              const defaultCurrency = dayTrades.length > 0 && dayTrades[0].account ? dayTrades[0].account.currency : 'USD';
               
               return (
                 <div 
@@ -132,7 +137,7 @@ export default function Calendar() {
                   {dayTrades.length > 0 && (
                     <div className="mt-2 space-y-1">
                       <div className={`text-sm font-bold ${totalPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {totalPnL >= 0 ? '+' : ''}${totalPnL.toFixed(2)}
+                        {totalPnL >= 0 ? '+' : ''}{formatCurrency(Math.abs(totalPnL), defaultCurrency)}
                       </div>
                       <div className="space-y-1">
                         {dayTrades.slice(0, 2).map((trade) => (
@@ -173,7 +178,7 @@ export default function Calendar() {
                       <p className="text-sm text-muted-foreground">Status: {trade.status}</p>
                     </div>
                     <div className={`font-bold ${trade.profitAmount && trade.profitAmount > 0 ? 'text-green-500' : trade.profitAmount && trade.profitAmount < 0 ? 'text-red-500' : ''}`}>
-                      {trade.profitAmount ? `$${trade.profitAmount.toFixed(2)}` : '-'}
+                      {trade.profitAmount ? formatCurrency(trade.profitAmount, trade.account?.currency || 'USD') : '-'}
                     </div>
                   </div>
                 ))}

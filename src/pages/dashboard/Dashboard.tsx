@@ -12,6 +12,7 @@ import { ChevronLeft, ChevronRight, Moon, RefreshCw, Target, DollarSign, Percent
 import { useToast } from '@/hooks/use-toast';
 import TradeFilterBar from '@/components/TradeFilterBar';
 import { useTradeFilter } from '@/hooks/useTradeFilter';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface DashboardStats {
   totalPnL: number;
@@ -27,6 +28,9 @@ interface Trade {
   pair: string;
   profitAmount: number | null;
   status: string;
+  account?: {
+    currency: string;
+  };
 }
 
 export default function Dashboard() {
@@ -61,6 +65,8 @@ export default function Dashboard() {
   const grossProfit = winningTrades.reduce((sum, t) => sum + (t.profitAmount || 0), 0);
   const grossLoss = Math.abs(losingTrades.reduce((sum, t) => sum + (t.profitAmount || 0), 0));
   const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? grossProfit : 0);
+  
+  const defaultCurrency = filteredTrades.length > 0 && filteredTrades[0].account ? filteredTrades[0].account.currency : 'USD';
   
   const stats = {
     winRate,
@@ -137,7 +143,7 @@ export default function Dashboard() {
               <DollarSign className="h-4 w-4 text-green-500" />
             </div>
             <div className={`text-2xl font-bold ${stats?.totalPnL && stats.totalPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {stats?.totalPnL !== undefined ? `$${stats.totalPnL > 1000 ? (stats.totalPnL/1000).toFixed(1) + 'K' : stats.totalPnL.toFixed(1)}` : '$0.0'}
+              {stats?.totalPnL !== undefined ? formatCurrency(stats.totalPnL, defaultCurrency) : formatCurrency(0, defaultCurrency)}
             </div>
           </CardContent>
         </Card>
@@ -249,7 +255,7 @@ export default function Dashboard() {
                         <div className="mt-auto flex flex-col gap-1.5 pt-2">
                           <div className={`px-2 py-1 rounded-md text-xs font-bold flex items-center justify-between ${dailyPnL >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                             <span>P&L</span>
-                            <span>{dailyPnL >= 0 ? '+' : ''}${Math.abs(dailyPnL).toFixed(2)}</span>
+                            <span>{dailyPnL >= 0 ? '+' : ''}{formatCurrency(Math.abs(dailyPnL), defaultCurrency)}</span>
                           </div>
                           <div className="px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-[11px] font-semibold flex items-center gap-1">
                             <Target className="w-3 h-3" />
@@ -267,7 +273,7 @@ export default function Dashboard() {
                     <div className="text-center space-y-1">
                       <div className="text-xs text-muted-foreground">{weekTrades} trades</div>
                       <div className={`text-xs font-bold ${weekPnL >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                        {weekPnL >= 0 ? '+' : ''}{weekPnL.toFixed(1)}
+                        {weekPnL >= 0 ? '+' : ''}{formatCurrency(Math.abs(weekPnL), defaultCurrency)}
                       </div>
                     </div>
                   )}
@@ -296,7 +302,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex flex-col items-end">
                       <div className={`font-bold ${trade.profitAmount && trade.profitAmount > 0 ? 'text-green-500' : trade.profitAmount && trade.profitAmount < 0 ? 'text-red-500' : ''}`}>
-                        {trade.profitAmount ? `$${trade.profitAmount.toFixed(2)}` : '-'}
+                        {trade.profitAmount ? formatCurrency(trade.profitAmount, trade.account?.currency || defaultCurrency) : '-'}
                       </div>
                       <span className="text-[10px] text-muted-foreground">Click to view</span>
                     </div>

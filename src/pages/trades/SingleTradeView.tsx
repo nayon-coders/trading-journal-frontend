@@ -4,6 +4,7 @@ import api from '@/services/api';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { ArrowLeft, Target, TrendingUp, TrendingDown, DollarSign, Activity, Flag, Crosshair } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -24,6 +25,7 @@ interface Trade {
   riskAmount: number;
   status: string;
   profitAmount: number;
+  account: { accountName: string; currency: string };
   preTradeNote: string;
   executionNote: string;
   mistakeNote: string;
@@ -112,7 +114,7 @@ export default function SingleTradeView() {
             </span>
             <span className={`text-3xl font-extrabold ${isWin ? 'text-green-700' : isLoss ? 'text-red-700' : isBreakeven ? 'text-yellow-700' : 'text-blue-700'}`}>
               {trade.profitAmount !== null && trade.profitAmount !== undefined 
-                ? `${trade.profitAmount >= 0 ? '+' : '-'}$${Math.abs(trade.profitAmount).toFixed(2)}` 
+                ? `${trade.profitAmount >= 0 ? '+' : ''}${formatCurrency(Math.abs(trade.profitAmount), trade.account?.currency || 'USD')}` 
                 : 'Pending'}
             </span>
           </div>
@@ -126,7 +128,7 @@ export default function SingleTradeView() {
           <MetricCard icon={<Crosshair />} label="Entry Price" value={trade.entryPrice} />
           <MetricCard icon={<DollarSign />} label="Lot Size" value={trade.lotSize || '-'} />
           <MetricCard icon={<TrendingUp />} label="R:R Ratio" value={trade.rrRatio || '-'} />
-          <MetricCard icon={<DollarSign />} label="Risk Amount" value={trade.riskAmount ? `$${trade.riskAmount}` : '-'} highlight />
+          <MetricCard icon={<DollarSign />} label="Risk Amount" value={trade.riskAmount ? formatCurrency(trade.riskAmount, trade.account?.currency || 'USD') : '-'} highlight />
         </div>
 
         {/* Chart Image */}
