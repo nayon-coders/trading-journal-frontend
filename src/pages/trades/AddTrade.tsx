@@ -312,8 +312,11 @@ export default function AddTrade() {
                   </Select>
                 </div>
                 
+                <div className="grid gap-2 col-span-2">
+                  <Label className="text-muted-foreground font-semibold flex items-center gap-1"><DollarSign className="w-3 h-3"/> Profit/Loss ({accounts.find(a => a.id === accountId)?.currency === 'BDT' ? 'BDT' : '$'})</Label>
+                  <Input type="number" step="0.01" value={profitAmount} onChange={(e: any) => setProfitAmount(e.target.value)} className={`font-bold text-lg border-border ${profitAmount && parseFloat(profitAmount) >= 0 ? 'bg-green-50 text-green-700' : profitAmount && parseFloat(profitAmount) < 0 ? 'bg-red-50 text-red-700' : 'bg-muted/30'}`} />
+                </div>
 
-                
                 <div className="grid gap-2 col-span-2 pt-2 border-t border-border">
                   <Label className="text-muted-foreground font-semibold flex items-center gap-1"><ImageIcon className="w-3 h-3"/> Chart Image</Label>
                   <div className="flex space-x-2">
