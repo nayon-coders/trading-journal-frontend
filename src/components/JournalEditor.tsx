@@ -22,6 +22,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
   const [isRecording, setIsRecording] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
+  const [interimTranscript, setInterimTranscript] = useState('')
 
   useEffect(() => {
     return () => {
@@ -45,29 +46,39 @@ const MenuBar = ({ editor }: { editor: any }) => {
     }
 
     const recognition = new SpeechRecognition()
+    // bn-BD automatically handles mixed Bengali and English for Bangladeshi users (like Google Translate)
     recognition.lang = "bn-BD"
     recognition.continuous = true
-    recognition.interimResults = false // only insert final results to avoid duplicating text
+    recognition.interimResults = true // Enable live interim results
 
     recognition.onresult = (event: any) => {
       let finalTranscript = ''
+      let currentInterim = ''
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (event.results[i].isFinal) {
           finalTranscript += event.results[i][0].transcript + ' '
+        } else {
+          currentInterim += event.results[i][0].transcript
         }
       }
+      
       if (finalTranscript.trim() && editor) {
         editor.chain().focus().insertContent(finalTranscript).run()
       }
+      
+      // Update live text on screen
+      setInterimTranscript(currentInterim)
     }
 
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error", event.error)
       setIsRecording(false)
+      setInterimTranscript('')
     }
 
     recognition.onend = () => {
       setIsRecording(false)
+      setInterimTranscript('')
     }
 
     try {
@@ -283,6 +294,16 @@ const MenuBar = ({ editor }: { editor: any }) => {
       >
         <Redo className="h-4 w-4" />
       </Button>
+
+      {/* Live Voice Typing Overlay */}
+      {interimTranscript && (
+        <div className="absolute top-full left-0 right-0 mt-2 z-10 bg-primary/95 text-primary-foreground p-3 rounded-lg shadow-xl shadow-primary/20 flex items-center gap-3 backdrop-blur-md animate-in fade-in slide-in-from-top-2">
+          <div className="bg-white/20 p-2 rounded-full animate-pulse">
+            <Mic className="w-4 h-4" />
+          </div>
+          <p className="font-medium italic text-sm">{interimTranscript}</p>
+        </div>
+      )}
     </div>
   )
 }
