@@ -26,7 +26,7 @@ export default function TradeFilterBar({ filterState, setFilterState }: TradeFil
   }, []);
 
   return (
-    <div className="bg-white/80 backdrop-blur-md p-4 rounded-xl border border-gray-100 shadow-sm flex flex-wrap items-end gap-4 mb-6">
+    <div className="bg-card/80 dark:bg-card/90 backdrop-blur-md p-4 rounded-xl border border-border shadow-sm flex flex-wrap items-end gap-4 mb-6">
       <div className="flex items-center gap-2 mr-2 text-primary font-bold">
         <Filter className="w-5 h-5" />
         <span className="hidden sm:inline">Filters</span>
@@ -39,7 +39,7 @@ export default function TradeFilterBar({ filterState, setFilterState }: TradeFil
           value={filterState.accountId} 
           onValueChange={(val) => setFilterState(prev => ({ ...prev, accountId: val }))}
         >
-          <SelectTrigger className="h-9 bg-white">
+          <SelectTrigger className="h-9 bg-card">
             <SelectValue placeholder="All Accounts" />
           </SelectTrigger>
           <SelectContent>
@@ -58,7 +58,7 @@ export default function TradeFilterBar({ filterState, setFilterState }: TradeFil
           value={filterState.setupId} 
           onValueChange={(val) => setFilterState(prev => ({ ...prev, setupId: val }))}
         >
-          <SelectTrigger className="h-9 bg-white">
+          <SelectTrigger className="h-9 bg-card">
             <SelectValue placeholder="All Setups" />
           </SelectTrigger>
           <SelectContent>
@@ -77,7 +77,7 @@ export default function TradeFilterBar({ filterState, setFilterState }: TradeFil
           value={filterState.status} 
           onValueChange={(val) => setFilterState(prev => ({ ...prev, status: val }))}
         >
-          <SelectTrigger className="h-9 bg-white">
+          <SelectTrigger className="h-9 bg-card">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
@@ -97,7 +97,7 @@ export default function TradeFilterBar({ filterState, setFilterState }: TradeFil
           value={filterState.dateRange} 
           onValueChange={(val) => setFilterState(prev => ({ ...prev, dateRange: val }))}
         >
-          <SelectTrigger className="h-9 bg-white">
+          <SelectTrigger className="h-9 bg-card">
             <SelectValue placeholder="All Time" />
           </SelectTrigger>
           <SelectContent>
@@ -117,7 +117,7 @@ export default function TradeFilterBar({ filterState, setFilterState }: TradeFil
             <Label className="text-xs text-muted-foreground mb-1 block">Start Date</Label>
             <Input 
               type="date" 
-              className="h-9 bg-white"
+              className="h-9 bg-card"
               value={filterState.startDate ? filterState.startDate.toISOString().split('T')[0] : ''}
               onChange={(e) => setFilterState(prev => ({ ...prev, startDate: new Date(e.target.value) }))}
             />
@@ -126,7 +126,7 @@ export default function TradeFilterBar({ filterState, setFilterState }: TradeFil
             <Label className="text-xs text-muted-foreground mb-1 block">End Date</Label>
             <Input 
               type="date" 
-              className="h-9 bg-white"
+              className="h-9 bg-card"
               value={filterState.endDate ? filterState.endDate.toISOString().split('T')[0] : ''}
               onChange={(e) => setFilterState(prev => ({ ...prev, endDate: new Date(e.target.value) }))}
             />

@@ -8,10 +8,11 @@ import {
   format, addMonths, subMonths, startOfMonth, endOfMonth, 
   eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek 
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Moon, RefreshCw, Target, DollarSign, Percent, Activity } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Moon, RefreshCw, Target, DollarSign, Percent, Activity, Trophy, AlertTriangle, TrendingUp, BarChart2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import TradeFilterBar from '@/components/TradeFilterBar';
 import { useTradeFilter } from '@/hooks/useTradeFilter';
+import { useEnvironmentStore } from '@/store/useEnvironmentStore';
 import { formatCurrency } from '@/utils/formatCurrency';
 
 interface DashboardStats {
@@ -30,6 +31,7 @@ interface Trade {
   status: string;
   account?: {
     currency: string;
+    environment?: string;
   };
 }
 
@@ -40,13 +42,16 @@ export default function Dashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { environment } = useEnvironmentStore();
 
   const { filterState, setFilterState, filteredTrades } = useTradeFilter(trades);
 
   const fetchData = async () => {
     try {
       const tradesRes = await api.get('/trades');
-      setTrades(tradesRes.data);
+      // Filter trades globally based on selected environment
+      const envTrades = tradesRes.data.filter((t: any) => (t.account?.environment || 'Live') === environment);
+      setTrades(envTrades);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -55,6 +60,10 @@ export default function Dashboard() {
       });
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, [environment]); // Re-fetch or re-filter when environment changes
 
   // Calculate dynamic stats from filteredTrades
   const totalTrades = filteredTrades.length;
@@ -75,6 +84,42 @@ export default function Dashboard() {
     totalTrades,
     returns: 18.0
   };
+
+  // Setup Analytics Calculations
+  const getGroupStats = (tradeList: any[], keyFn: (t: any) => string) => {
+    const groups: Record<string, { wins: number, losses: number, total: number, pnl: number, rr: number }> = {};
+    tradeList.forEach(t => {
+      const isClosed = t.status === 'Win' || t.status === 'Loss';
+      if (!isClosed) return;
+      const key = keyFn(t) || 'N/A';
+      if (!groups[key]) groups[key] = { wins: 0, losses: 0, total: 0, pnl: 0, rr: 0 };
+      
+      groups[key].total++;
+      if (t.status === 'Win') groups[key].wins++;
+      else if (t.status === 'Loss') groups[key].losses++;
+      
+      groups[key].pnl += (t.profitAmount || 0);
+      groups[key].rr += (t.rrRatio || 0);
+    });
+    return Object.entries(groups).map(([name, s]) => ({
+      name,
+      winRate: s.total > 0 ? (s.wins / s.total) * 100 : 0,
+      pnl: s.pnl,
+      avgRr: s.total > 0 ? s.rr / s.total : 0,
+      total: s.total
+    })).sort((a, b) => b.total - a.total);
+  };
+
+  const msbStats = getGroupStats(filteredTrades, t => t.msbDirection);
+  const entrySourceStats = getGroupStats(filteredTrades, t => t.entrySource);
+  const htfBiasStats = getGroupStats(filteredTrades, t => t.htfBias);
+  const setupQualityStats = getGroupStats(filteredTrades, t => t.setupQuality);
+  const setupTypeStats = getGroupStats(filteredTrades, t => t.setupRelation?.name || t.entrySource || 'Other');
+
+  const bestSetup = [...setupTypeStats].sort((a, b) => b.pnl - a.pnl)[0];
+  const worstSetup = [...setupTypeStats].sort((a, b) => a.pnl - b.pnl)[0];
+  const highestWinRateSetup = [...setupTypeStats].filter(s => s.total >= 1).sort((a, b) => b.winRate - a.winRate)[0];
+  const mostUsedSetup = setupTypeStats[0];
 
   useEffect(() => {
     fetchData();
@@ -124,11 +169,11 @@ export default function Dashboard() {
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="shadow-sm border-gray-200">
+        <Card className="shadow-sm border-border">
           <CardContent className="p-4 flex flex-col justify-between h-full space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground font-medium">Win Rate</span>
-              <Target className="h-4 w-4 text-gray-400" />
+              <Target className="h-4 w-4 text-muted-foreground/70" />
             </div>
             <div className="text-2xl font-bold">
               {stats ? `${stats.winRate.toFixed(1)}%` : '0.0%'}
@@ -136,7 +181,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-gray-200">
+        <Card className="shadow-sm border-border">
           <CardContent className="p-4 flex flex-col justify-between h-full space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground font-medium">Total P&L</span>
@@ -148,7 +193,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-gray-200">
+        <Card className="shadow-sm border-border">
           <CardContent className="p-4 flex flex-col justify-between h-full space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground font-medium">Returns</span>
@@ -160,7 +205,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-gray-200">
+        <Card className="shadow-sm border-border">
           <CardContent className="p-4 flex flex-col justify-between h-full space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground font-medium">Profit Factor</span>
@@ -169,6 +214,53 @@ export default function Dashboard() {
             <div className="text-2xl font-bold text-green-500">
               {stats ? stats.profitFactor.toFixed(2) : '0.00'}
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Setup Analytics Widgets */}
+      <div className="grid gap-4 md:grid-cols-4 mt-8">
+        <Card className="shadow-sm border-border bg-gradient-to-br from-green-50 to-white dark:from-green-500/10 dark:to-card">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <Trophy className="h-4 w-4 text-green-600 dark:text-green-500" />
+              <span className="text-sm font-semibold text-green-800 dark:text-green-400">Best Setup (P&L)</span>
+            </div>
+            <div className="text-lg font-bold text-foreground truncate" title={bestSetup?.name || 'N/A'}>{bestSetup?.name || 'N/A'}</div>
+            <div className="text-sm font-medium text-green-600 dark:text-green-500 mt-1">{bestSetup ? formatCurrency(bestSetup.pnl, defaultCurrency) : '-'}</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm border-border bg-gradient-to-br from-red-50 to-white dark:from-red-500/10 dark:to-card">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-500" />
+              <span className="text-sm font-semibold text-red-800 dark:text-red-400">Worst Setup (P&L)</span>
+            </div>
+            <div className="text-lg font-bold text-foreground truncate" title={worstSetup?.name || 'N/A'}>{worstSetup?.name || 'N/A'}</div>
+            <div className="text-sm font-medium text-red-600 dark:text-red-500 mt-1">{worstSetup ? formatCurrency(worstSetup.pnl, defaultCurrency) : '-'}</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm border-border bg-gradient-to-br from-blue-50 to-white dark:from-blue-500/10 dark:to-card">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-500" />
+              <span className="text-sm font-semibold text-blue-800 dark:text-blue-400">Highest Win Rate</span>
+            </div>
+            <div className="text-lg font-bold text-foreground truncate" title={highestWinRateSetup?.name || 'N/A'}>{highestWinRateSetup?.name || 'N/A'}</div>
+            <div className="text-sm font-medium text-blue-600 dark:text-blue-500 mt-1">{highestWinRateSetup ? `${highestWinRateSetup.winRate.toFixed(1)}%` : '-'}</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm border-border bg-gradient-to-br from-purple-50 to-white dark:from-purple-500/10 dark:to-card">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <BarChart2 className="h-4 w-4 text-purple-600 dark:text-purple-500" />
+              <span className="text-sm font-semibold text-purple-800 dark:text-purple-400">Most Used Setup</span>
+            </div>
+            <div className="text-lg font-bold text-foreground truncate" title={mostUsedSetup?.name || 'N/A'}>{mostUsedSetup?.name || 'N/A'}</div>
+            <div className="text-sm font-medium text-purple-600 dark:text-purple-500 mt-1">{mostUsedSetup ? `${mostUsedSetup.total} trades` : '-'}</div>
           </CardContent>
         </Card>
       </div>
@@ -209,11 +301,11 @@ export default function Dashboard() {
       </div>
 
       {/* Calendar Grid */}
-      <div className="border rounded-md bg-white overflow-hidden shadow-sm">
+      <div className="border rounded-md bg-card overflow-hidden shadow-sm">
         {/* Header */}
         <div className="grid grid-cols-6 border-b divide-x">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Summary'].map((day) => (
-            <div key={day} className="py-3 text-center text-xs font-semibold text-muted-foreground bg-gray-50/50">
+            <div key={day} className="py-3 text-center text-xs font-semibold text-muted-foreground bg-muted/30">
               {day}
             </div>
           ))}
@@ -236,8 +328,8 @@ export default function Dashboard() {
                   weekTrades += dayTrades.length;
                   const isCurrentMonth = isSameMonth(day, monthStart);
                   
-                  let bgColorClass = "bg-white";
-                  if (!isCurrentMonth) bgColorClass = "bg-gray-50";
+                  let bgColorClass = "bg-card";
+                  if (!isCurrentMonth) bgColorClass = "bg-muted/50";
                   else if (dailyPnL > 0) bgColorClass = "bg-green-50/50";
                   else if (dailyPnL < 0) bgColorClass = "bg-red-50/50";
 
@@ -247,7 +339,7 @@ export default function Dashboard() {
                       className={`p-3 flex flex-col relative cursor-pointer transition-all border-r border-b ${isCurrentMonth ? 'hover:bg-primary/5 hover:shadow-inner' : ''} ${bgColorClass}`}
                       onClick={() => handleDayClick(day)}
                     >
-                      <span className={`text-sm font-bold ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}`}>
+                      <span className={`text-sm font-bold ${isCurrentMonth ? 'text-foreground' : 'text-muted-foreground/70'}`}>
                         {format(day, 'd')}
                       </span>
                       
@@ -268,7 +360,7 @@ export default function Dashboard() {
                 })}
 
                 {/* Summary Cell */}
-                <div className="p-2 flex flex-col items-center justify-center bg-gray-50/30">
+                <div className="p-2 flex flex-col items-center justify-center bg-muted/20">
                   {weekTrades > 0 && (
                     <div className="text-center space-y-1">
                       <div className="text-xs text-muted-foreground">{weekTrades} trades</div>
@@ -282,6 +374,96 @@ export default function Dashboard() {
             );
           })}
         </div>
+      </div>
+
+      {/* Setup Breakdown Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        
+        <Card className="shadow-sm border-border">
+          <CardContent className="p-0">
+            <div className="px-4 py-3 border-b bg-muted/30">
+              <h3 className="font-semibold text-sm text-primary">Win Rate By Entry Source</h3>
+            </div>
+            <div className="divide-y">
+              {entrySourceStats.map(stat => (
+                <div key={stat.name} className="flex justify-between items-center p-4">
+                  <span className="font-medium text-sm w-1/3">{stat.name}</span>
+                  <div className="w-1/3 px-2">
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div className={`h-full ${stat.winRate > 50 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${stat.winRate}%` }} />
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold w-1/4 text-right">{stat.winRate.toFixed(1)}% ({stat.total})</span>
+                </div>
+              ))}
+              {entrySourceStats.length === 0 && <div className="p-4 text-sm text-muted-foreground text-center">No data available</div>}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-border">
+          <CardContent className="p-0">
+            <div className="px-4 py-3 border-b bg-muted/30">
+              <h3 className="font-semibold text-sm text-primary">Win Rate By Setup Quality</h3>
+            </div>
+            <div className="divide-y">
+              {setupQualityStats.map(stat => (
+                <div key={stat.name} className="flex justify-between items-center p-4">
+                  <span className="font-medium text-sm w-1/3">{stat.name}</span>
+                  <div className="w-1/3 px-2">
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div className={`h-full ${stat.winRate > 50 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${stat.winRate}%` }} />
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold w-1/4 text-right">{stat.winRate.toFixed(1)}% ({stat.total})</span>
+                </div>
+              ))}
+              {setupQualityStats.length === 0 && <div className="p-4 text-sm text-muted-foreground text-center">No data available</div>}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-border">
+          <CardContent className="p-0">
+            <div className="px-4 py-3 border-b bg-muted/30">
+              <h3 className="font-semibold text-sm text-primary">Profit By Setup Type</h3>
+            </div>
+            <div className="divide-y">
+              {setupTypeStats.map(stat => (
+                <div key={stat.name} className="flex justify-between items-center p-4">
+                  <span className="font-medium text-sm w-1/2">{stat.name}</span>
+                  <span className={`text-sm font-bold w-1/2 text-right ${stat.pnl >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                    {stat.pnl >= 0 ? '+' : ''}{formatCurrency(stat.pnl, defaultCurrency)}
+                  </span>
+                </div>
+              ))}
+              {setupTypeStats.length === 0 && <div className="p-4 text-sm text-muted-foreground text-center">No data available</div>}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-border">
+          <CardContent className="p-0">
+            <div className="px-4 py-3 border-b bg-muted/30">
+              <h3 className="font-semibold text-sm text-primary">Win Rate By MSB Direction</h3>
+            </div>
+            <div className="divide-y">
+              {msbStats.map(stat => (
+                <div key={stat.name} className="flex justify-between items-center p-4">
+                  <span className="font-medium text-sm w-1/3">{stat.name}</span>
+                  <div className="w-1/3 px-2">
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div className={`h-full ${stat.winRate > 50 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${stat.winRate}%` }} />
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold w-1/4 text-right">{stat.winRate.toFixed(1)}% ({stat.total})</span>
+                </div>
+              ))}
+              {msbStats.length === 0 && <div className="p-4 text-sm text-muted-foreground text-center">No data available</div>}
+            </div>
+          </CardContent>
+        </Card>
+
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

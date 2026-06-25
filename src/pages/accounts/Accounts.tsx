@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useEnvironmentStore } from '@/store/useEnvironmentStore';
 import api from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ interface Account {
   startingBalance: number;
   currentBalance: number;
   accountType: string;
+  environment: string;
   currency: string;
 }
 
@@ -33,7 +35,9 @@ export default function Accounts() {
   const [brokerName, setBrokerName] = useState('');
   const [startingBalance, setStartingBalance] = useState('');
   const [accountType, setAccountType] = useState('Personal');
+  const [accountEnv, setAccountEnv] = useState('Live');
   const [currency, setCurrency] = useState('USD');
+  const { environment: globalEnv } = useEnvironmentStore();
 
   const { toast } = useToast();
 
@@ -63,6 +67,7 @@ export default function Accounts() {
         brokerName,
         startingBalance: parseFloat(startingBalance),
         accountType,
+        environment: accountEnv,
         currency
       });
       toast({
@@ -93,6 +98,7 @@ export default function Accounts() {
         brokerName,
         startingBalance: parseFloat(startingBalance),
         accountType,
+        environment: accountEnv,
         currency
       });
       toast({
@@ -134,6 +140,7 @@ export default function Accounts() {
     setBrokerName(account.brokerName || '');
     setStartingBalance(String(account.startingBalance));
     setAccountType(account.accountType || 'Personal');
+    setAccountEnv(account.environment || 'Live');
     setCurrency(account.currency || 'USD');
     setIsEditOpen(true);
   };
@@ -143,6 +150,7 @@ export default function Accounts() {
     setBrokerName('');
     setStartingBalance('');
     setAccountType('Personal');
+    setAccountEnv('Live');
     setCurrency('USD');
     setEditingAccountId(null);
   };
@@ -208,6 +216,18 @@ export default function Accounts() {
                       <SelectItem value="Personal">Personal</SelectItem>
                       <SelectItem value="Funded">Funded</SelectItem>
                       <SelectItem value="Prop Firm">Prop Firm Challenge</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="environment">Environment</Label>
+                  <Select value={accountEnv} onValueChange={setAccountEnv}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select environment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Live">Live</SelectItem>
+                      <SelectItem value="Backtesting">Backtesting</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -292,6 +312,18 @@ export default function Accounts() {
                   </Select>
                 </div>
                 <div className="grid gap-2">
+                  <Label htmlFor="edit-environment">Environment</Label>
+                  <Select value={accountEnv} onValueChange={setAccountEnv}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select environment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Live">Live</SelectItem>
+                      <SelectItem value="Backtesting">Backtesting</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
                   <Label htmlFor="edit-currency">Currency</Label>
                   <Select value={currency} onValueChange={setCurrency}>
                     <SelectTrigger>
@@ -319,7 +351,7 @@ export default function Accounts() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {accounts.map((account) => (
+        {accounts.filter(a => (a.environment || 'Live') === globalEnv).map((account) => (
           <Card key={account.id}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xl font-bold">
@@ -350,7 +382,7 @@ export default function Accounts() {
             </CardFooter>
           </Card>
         ))}
-        {accounts.length === 0 && (
+        {accounts.filter(a => (a.environment || 'Live') === globalEnv).length === 0 && (
           <div className="col-span-full py-12 text-center text-muted-foreground">
             No accounts found. Create one to get started!
           </div>

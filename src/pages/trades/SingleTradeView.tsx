@@ -85,10 +85,10 @@ export default function SingleTradeView() {
         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Journal
       </Button>
 
-      <div className="bg-white/80 backdrop-blur-xl p-8 md:p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/40 mb-8">
+      <div className="bg-card/80 dark:bg-card/90 backdrop-blur-xl p-8 md:p-10 rounded-2xl shadow-sm dark:shadow-none border border-border mb-8">
         
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-100 pb-8 mb-8 gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-border pb-8 mb-8 gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-br from-gray-900 to-gray-600 bg-clip-text text-transparent">
@@ -101,9 +101,9 @@ export default function SingleTradeView() {
             </div>
             <p className="text-muted-foreground font-medium flex items-center gap-2">
               <span>{format(new Date(trade.tradeDate), 'EEEE, MMMM dd, yyyy')}</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"></span>
               <span>{trade.tradeTime}</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"></span>
               <span>{trade.session} Session</span>
             </p>
           </div>
@@ -133,7 +133,7 @@ export default function SingleTradeView() {
 
         {/* Chart Image */}
         {trade.imageUrlBefore && (
-          <div className="mb-10 rounded-2xl overflow-hidden border-2 border-gray-100 shadow-md max-h-[700px] flex justify-center bg-gray-50/50 group relative">
+          <div className="mb-10 rounded-2xl overflow-hidden border-2 border-border shadow-md max-h-[700px] flex justify-center bg-muted/30 group relative">
             <img 
               src={trade.imageUrlBefore} 
               alt="Trade Chart" 
@@ -149,18 +149,18 @@ export default function SingleTradeView() {
             <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">📝</span>
             Trading Notepad
           </h3>
-          <div className="bg-white border rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
             <Tabs defaultValue="pretrade" className="w-full">
               <div className="bg-muted/30 border-b p-2">
-                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto p-1 bg-white/50 backdrop-blur-sm rounded-xl">
-                  <TabsTrigger value="pretrade" className="py-3 text-sm md:text-base font-semibold data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary transition-all">Trade Reason</TabsTrigger>
-                  <TabsTrigger value="execution" className="py-3 text-sm md:text-base font-semibold data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary transition-all">Execution</TabsTrigger>
-                  <TabsTrigger value="mistake" className="py-3 text-sm md:text-base font-semibold data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary transition-all">Mistakes</TabsTrigger>
-                  <TabsTrigger value="lesson" className="py-3 text-sm md:text-base font-semibold data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary transition-all">Lessons</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto p-1 bg-card/50 dark:bg-card/50 backdrop-blur-sm rounded-xl">
+                  <TabsTrigger value="pretrade" className="py-3 text-sm md:text-base font-semibold data-[state=active]:bg-card data-[state=active]:shadow-sm data-[state=active]:text-primary transition-all">Trade Reason</TabsTrigger>
+                  <TabsTrigger value="execution" className="py-3 text-sm md:text-base font-semibold data-[state=active]:bg-card data-[state=active]:shadow-sm data-[state=active]:text-primary transition-all">Execution</TabsTrigger>
+                  <TabsTrigger value="mistake" className="py-3 text-sm md:text-base font-semibold data-[state=active]:bg-card data-[state=active]:shadow-sm data-[state=active]:text-primary transition-all">Mistakes</TabsTrigger>
+                  <TabsTrigger value="lesson" className="py-3 text-sm md:text-base font-semibold data-[state=active]:bg-card data-[state=active]:shadow-sm data-[state=active]:text-primary transition-all">Lessons</TabsTrigger>
                 </TabsList>
               </div>
               
-              <div className="p-8 min-h-[400px] bg-white">
+              <div className="p-8 min-h-[400px] bg-card">
                 <TabsContent value="pretrade" className="m-0 focus-visible:outline-none">
                   {trade.preTradeNote ? (
                     <div className="prose prose-blue max-w-none" dangerouslySetInnerHTML={{ __html: trade.preTradeNote }} />
@@ -194,12 +194,12 @@ export default function SingleTradeView() {
 // Subcomponents for cleaner code
 function MetricCard({ icon, label, value, highlight = false }: { icon: React.ReactNode, label: string, value: string | number, highlight?: boolean }) {
   return (
-    <div className={`p-4 rounded-xl border flex flex-col gap-2 transition-all hover:shadow-md ${highlight ? 'bg-primary/5 border-primary/20' : 'bg-white hover:border-gray-300'}`}>
+    <div className={`p-4 rounded-xl border flex flex-col gap-2 transition-all hover:shadow-md ${highlight ? 'bg-primary/5 border-primary/20' : 'bg-card hover:border-border'}`}>
       <div className="flex items-center gap-2 text-muted-foreground">
         <span className="w-4 h-4 [&>svg]:w-4 [&>svg]:h-4">{icon}</span>
         <span className="text-xs font-semibold uppercase tracking-wider">{label}</span>
       </div>
-      <p className={`text-lg font-bold ${highlight ? 'text-primary' : 'text-gray-900'}`}>{value}</p>
+      <p className={`text-lg font-bold ${highlight ? 'text-primary' : 'text-foreground'}`}>{value}</p>
     </div>
   );
 }
@@ -207,7 +207,7 @@ function MetricCard({ icon, label, value, highlight = false }: { icon: React.Rea
 function EmptyNote({ text }: { text: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/60 space-y-4">
-      <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center">
+      <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
         <span className="text-2xl">📝</span>
       </div>
       <p className="italic font-medium">{text}</p>

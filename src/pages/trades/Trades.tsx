@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { useEnvironmentStore } from '@/store/useEnvironmentStore';
 import { Edit, Trash2 } from 'lucide-react';
 import TradeFilterBar from '@/components/TradeFilterBar';
 import { useTradeFilter } from '@/hooks/useTradeFilter';
@@ -27,13 +28,15 @@ export default function Trades() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { environment } = useEnvironmentStore();
   
   const { filterState, setFilterState, filteredTrades } = useTradeFilter(trades);
 
   const fetchData = async () => {
     try {
       const response = await api.get('/trades');
-      setTrades(response.data);
+      const envTrades = response.data.filter((t: any) => (t.account?.environment || 'Live') === environment);
+      setTrades(envTrades);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -45,7 +48,7 @@ export default function Trades() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [environment]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -77,7 +80,7 @@ export default function Trades() {
 
       <TradeFilterBar filterState={filterState} setFilterState={setFilterState} />
 
-      <div className="border rounded-md bg-white">
+      <div className="border rounded-md bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -93,7 +96,7 @@ export default function Trades() {
           </TableHeader>
           <TableBody>
             {filteredTrades.map((trade) => (
-              <TableRow key={trade.id} className="cursor-pointer hover:bg-gray-50" onClick={() => navigate(`/trades/${trade.id}`)}>
+              <TableRow key={trade.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/trades/${trade.id}`)}>
                 <TableCell>{new Date(trade.tradeDate).toLocaleDateString()}</TableCell>
                 <TableCell className="font-medium">{trade.pair}</TableCell>
                 <TableCell>

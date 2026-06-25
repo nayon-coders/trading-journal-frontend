@@ -8,8 +8,8 @@ import { TableHeader } from '@tiptap/extension-table-header'
 import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Button } from '@/components/ui/button'
-import { Bold, Italic, Strikethrough, Heading2, List, ListOrdered, Code, Quote, Undo, Redo, Table as TableIcon, PaintBucket, ImageIcon, Loader2 } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { Bold, Italic, Strikethrough, Heading2, List, ListOrdered, Code, Quote, Undo, Redo, Table as TableIcon, PaintBucket, ImageIcon, Loader2, Mic, Square } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
 import api from '@/services/api'
 
 interface JournalEditorProps {
@@ -19,7 +19,65 @@ interface JournalEditorProps {
 
 const MenuBar = ({ editor }: { editor: any }) => {
   const [isUploading, setIsUploading] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const recognitionRef = useRef<any>(null)
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop()
+      }
+    }
+  }, [])
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      if (recognitionRef.current) recognitionRef.current.stop()
+      setIsRecording(false)
+      return
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      alert("Your browser does not support Speech Recognition. Try Chrome.")
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.lang = "bn-BD"
+    recognition.continuous = true
+    recognition.interimResults = false // only insert final results to avoid duplicating text
+
+    recognition.onresult = (event: any) => {
+      let finalTranscript = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript + ' '
+        }
+      }
+      if (finalTranscript.trim() && editor) {
+        editor.chain().focus().insertContent(finalTranscript).run()
+      }
+    }
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error)
+      setIsRecording(false)
+    }
+
+    recognition.onend = () => {
+      setIsRecording(false)
+    }
+
+    try {
+      recognition.start()
+      recognitionRef.current = recognition
+      setIsRecording(true)
+    } catch (err) {
+      console.error("Speech recognition start error", err)
+    }
+  }
 
   if (!editor) {
     return null
@@ -144,6 +202,18 @@ const MenuBar = ({ editor }: { editor: any }) => {
         {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
       </Button>
 
+      {/* Voice to Text */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={toggleRecording}
+        className={isRecording ? 'bg-red-100 text-red-600 animate-pulse hover:bg-red-200' : ''}
+        title="Voice to Text (Banglish)"
+      >
+        {isRecording ? <Square className="h-4 w-4" fill="currentColor" /> : <Mic className="h-4 w-4" />}
+      </Button>
+
       {/* Color Support */}
       <Button
         type="button"
@@ -169,7 +239,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
         size="sm"
         onClick={() => editor.chain().focus().unsetColor().run()}
       >
-        <PaintBucket className="h-4 w-4 text-gray-500" />
+        <PaintBucket className="h-4 w-4 text-muted-foreground" />
       </Button>
 
       <div className="w-px h-6 bg-border mx-1 my-auto" />
